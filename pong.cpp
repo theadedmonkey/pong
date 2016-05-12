@@ -9,6 +9,8 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
+const int FPS = 60;
+const int DELAY_TIME = 1000.0f / FPS;
 
 SDL_Texture* LoadTextureBMP(SDL_Renderer* &renderer, const std::string &str) {
   // Load image as SDL_Surface
@@ -111,6 +113,8 @@ int main( int argc, char* args[] ) {
 	//Event handler
 	SDL_Event e;
 
+  Uint32 frameStart, frameTime;
+
   // scores
   int player1Score = 0;
   int player2Score = 0;
@@ -172,6 +176,9 @@ int main( int argc, char* args[] ) {
 
 	//While application is running
 	while(!quit) {
+
+    frameStart = SDL_GetTicks();
+
 		//Handle events on queue
 		while( SDL_PollEvent( &e ) != 0 ) {
 			//User requests quit
@@ -305,7 +312,11 @@ int main( int argc, char* args[] ) {
     // This will show the new, red contents of the window.
     SDL_RenderPresent(renderer);
 
-    SDL_Delay(15);
+    frameTime = SDL_GetTicks() - frameStart;
+
+    if (frameTime < DELAY_TIME) {
+      SDL_Delay((int) (DELAY_TIME - frameTime));
+    }
   }
 
   //Free resources and close SDL
