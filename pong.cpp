@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include "lib/Vector2D.h"
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 800;
@@ -91,6 +92,7 @@ void close(SDL_Window* &window, SDL_Renderer* &renderer) {
 }
 
 int main( int argc, char* args[] ) {
+
   //Start up SDL and create window
   if(!init()) {
     printf( "Failed to initialize!\n" );
@@ -161,18 +163,17 @@ int main( int argc, char* args[] ) {
   SDL_Rect ballSrcRect;
   SDL_Rect ballDstRect;
 
-  int paddle1X = 20;
-	int paddle1Y = SCREEN_HEIGHT / 2 - 128 / 2;
-  int paddle1SpeedY = 25;
+  // paddle 1
+  Vector2D paddle1Pos = Vector2D(20, SCREEN_HEIGHT / 2 - 128 / 2);
+  Vector2D paddle1Vel = Vector2D(0, 25);
 
-  int paddle2X = SCREEN_WIDTH - 20 - 38;
-  int paddle2Y = SCREEN_HEIGHT / 2 - 128 / 2;
-  int paddle2SpeedY = 25;
+  // paddle 2
+  Vector2D paddle2Pos = Vector2D(SCREEN_WIDTH - 20 - 38, SCREEN_HEIGHT / 2 - 128 / 2);
+  Vector2D paddle2Vel = Vector2D(0, 25);
 
-  int ballX = SCREEN_WIDTH / 2 - 32 / 2;
-  int ballY = 0;
-  int ballSpeedX = 5;
-  int ballSpeedY = 5;
+  // ball
+  Vector2D ballPos = Vector2D(SCREEN_WIDTH / 2 - 32 / 2, 0);
+  Vector2D ballVel = Vector2D(5, 5);
 
 	//While application is running
 	while(!quit) {
@@ -188,16 +189,16 @@ int main( int argc, char* args[] ) {
 			else if(e.type == SDL_KEYDOWN) {
 				switch( e.key.keysym.sym ) {
 					case SDLK_w:
-					paddle1Y -= paddle1SpeedY;
+					paddle1Pos -= paddle1Vel;
 					break;
 					case SDLK_s:
-					paddle1Y += paddle1SpeedY;
+					paddle1Pos += paddle1Vel;
 					break;
           case SDLK_UP:
-          paddle2Y -= paddle2SpeedY;
+          paddle2Pos -= paddle2Vel;
           break;
           case SDLK_DOWN:
-          paddle2Y += paddle2SpeedY;
+          paddle2Pos += paddle2Vel;
           break;
 				}
 			}
@@ -206,69 +207,68 @@ int main( int argc, char* args[] ) {
 
     // paddle1 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle1DstRect)) {
-      ballSpeedX *= -1;
+      ballVel.x *= -1;
     }
     // paddle2 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle2DstRect)) {
-      ballSpeedX *= -1;
+      ballVel.x *= -1;
     }
     // ball intersects court top
-    if (ballY >= SCREEN_HEIGHT - 32) {
-      ballSpeedY *= -1;
+    if (ballPos.y >= SCREEN_HEIGHT - 32) {
+      ballVel.y *= -1;
     }
     // ball intersects court bottom
-    if (ballY < 0) {
-      ballSpeedY *= -1;
+    if (ballPos.y < 0) {
+      ballVel.y *= -1;
     }
 
     // ball overpass court right
-    if (ballX >= SCREEN_WIDTH) {
+    if (ballPos.x >= SCREEN_WIDTH) {
       player1Score += 1;
-      ballX = SCREEN_WIDTH / 2 - 32 / 2;
-      ballY = 0;
+      ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
+      ballPos.y = 0;
 
-      paddle1X = 20;
-    	paddle1Y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle1Pos.x = 20;
+    	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
 
-      paddle2X = SCREEN_WIDTH - 20 - 38;
-      paddle2Y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
+      paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
       SDL_Delay(1000);
     }
 
     // ball overpass court left
-    if (ballX <= 0 - 32) {
+    if (ballPos.x <= 0 - 32) {
       player2Score += 1;
 
-      ballX = SCREEN_WIDTH / 2 - 32 / 2;
-      ballY = 0;
+      ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
+      ballPos.y = 0;
 
-      paddle1X = 20;
-    	paddle1Y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle1Pos.x = 20;
+    	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
 
-      paddle2X = SCREEN_WIDTH - 20 - 38;
-      paddle2Y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
+      paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
 
       SDL_Delay(1000);
     }
 
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
+    ballPos += ballVel;
 
     // paddle1 intersects court top
-    if (paddle1Y < 0) {
-      paddle1Y = 0;
+    if (paddle1Pos.y < 0) {
+      paddle1Pos.y = 0;
     }
     // paddle1 intersects court bottom
-    if (paddle1Y >= SCREEN_HEIGHT - 128) {
-      paddle1Y = SCREEN_HEIGHT - 128;
+    if (paddle1Pos.y >= SCREEN_HEIGHT - 128) {
+      paddle1Pos.y = SCREEN_HEIGHT - 128;
     }
     // paddle2 intersects court top
-    if (paddle2Y < 0) {
-      paddle2Y = 0;
+    if (paddle2Pos.y < 0) {
+      paddle2Pos.y = 0;
     }
     // paddle2 intersects court bottom
-    if (paddle2Y >= SCREEN_HEIGHT - 128) {
-      paddle2Y = SCREEN_HEIGHT - 128;
+    if (paddle2Pos.y >= SCREEN_HEIGHT - 128) {
+      paddle2Pos.y = SCREEN_HEIGHT - 128;
     }
 
     /**************************************
@@ -279,41 +279,43 @@ int main( int argc, char* args[] ) {
     // Clear screen
 		SDL_RenderClear(renderer);
 
+    // court
     courtSrcRect = { 0, 0, 800, 600 };
     courtDstRect = { 0, 0, 800, 600 };
     SDL_RenderCopy(renderer, courtTexture, &courtSrcRect, &courtDstRect);
 
+    // paddle 1
 		paddle1SrcRect = { 0, 0, 32, 128 };
-		paddle1DstRect = { paddle1X, paddle1Y, 32, 128 };
+		paddle1DstRect = { (int)paddle1Pos.x, (int)paddle1Pos.y, 32, 128 };
 		SDL_RenderCopy(renderer, paddle1Texture, &paddle1SrcRect, &paddle1DstRect);
 
+    // paddle 2
     paddle2SrcRect = { 0, 0, 32, 128 };
-    paddle2DstRect = { paddle2X, paddle2Y, 32, 128 };
+    paddle2DstRect = { (int)paddle2Pos.x, (int)paddle2Pos.y, 32, 128 };
     SDL_RenderCopy(renderer, paddle2Texture, &paddle2SrcRect, &paddle2DstRect);
 
-
+    // player 1 score
     player1ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player1Score).c_str(), textColor);
     player1ScoreTexture = SDL_CreateTextureFromSurface(renderer, player1ScoreSurface);
     SDL_FreeSurface(player1ScoreSurface);
     player1ScoreDstRect = { SCREEN_WIDTH / 2 - 30 - 20, 20 , 30, 60 };
     SDL_RenderCopy(renderer, player1ScoreTexture, nullptr, &player1ScoreDstRect);
 
+    // player 2 score
     player2ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player2Score).c_str(), textColor);
     player2ScoreTexture = SDL_CreateTextureFromSurface(renderer, player2ScoreSurface);
     SDL_FreeSurface(player2ScoreSurface);
     player2ScoreDstRect = { SCREEN_WIDTH / 2 + 20, 20 , 30, 60 };
     SDL_RenderCopy(renderer, player2ScoreTexture, nullptr, &player2ScoreDstRect);
 
+    // ball
     ballSrcRect = { 0, 0, 32, 32 };
-    ballDstRect = { ballX, ballY, 32, 32 };
+    ballDstRect = { (int)ballPos.x, (int)ballPos.y, 32, 32 };
     SDL_RenderCopy(renderer, ballTexture, &ballSrcRect, &ballDstRect);
 
-		// Up until now everything was drawn behind the scenes.
-    // This will show the new, red contents of the window.
     SDL_RenderPresent(renderer);
 
     frameTime = SDL_GetTicks() - frameStart;
-
     if (frameTime < DELAY_TIME) {
       SDL_Delay((int) (DELAY_TIME - frameTime));
     }
