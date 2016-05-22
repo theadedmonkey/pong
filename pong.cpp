@@ -10,7 +10,7 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-const int FPS = 60;
+const int FPS = 120;
 const int DELAY_TIME = 1000.0f / FPS;
 
 SDL_Texture* LoadTextureBMP(SDL_Renderer* &renderer, const std::string &str) {
@@ -163,17 +163,28 @@ int main( int argc, char* args[] ) {
   SDL_Rect ballSrcRect;
   SDL_Rect ballDstRect;
 
+  SDL_Rect ballInvRect;
+
   // paddle 1
   Vector2D paddle1Pos = Vector2D(20, SCREEN_HEIGHT / 2 - 128 / 2);
   Vector2D paddle1Vel = Vector2D(0, 25);
 
   // paddle 2
   Vector2D paddle2Pos = Vector2D(SCREEN_WIDTH - 20 - 38, SCREEN_HEIGHT / 2 - 128 / 2);
-  Vector2D paddle2Vel = Vector2D(0, 25);
+  Vector2D paddle2Vel = Vector2D(0, 1.5);
 
   // ball
   Vector2D ballPos = Vector2D(SCREEN_WIDTH / 2 - 32 / 2, 0);
-  Vector2D ballVel = Vector2D(5, 5);
+  Vector2D ballVel = Vector2D(2.5, 2.5);
+
+  // ball invisible
+  Vector2D ballInvPos = Vector2D();
+  Vector2D ballInvVel = Vector2D();
+
+  float ballInvPointY = 0.0f;
+
+  bool paddle1HasCollide = false;
+  bool paddle2HasCollide = false;
 
 	//While application is running
 	while(!quit) {
@@ -195,23 +206,31 @@ int main( int argc, char* args[] ) {
 					paddle1Pos += paddle1Vel;
 					break;
           case SDLK_UP:
-          paddle2Pos -= paddle2Vel;
+          // paddle2Pos -= paddle2Vel;
           break;
           case SDLK_DOWN:
-          paddle2Pos += paddle2Vel;
+          // paddle2Pos += paddle2Vel;
           break;
 				}
 			}
 		}
 
-
     // paddle1 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle1DstRect)) {
       ballVel.x *= -1;
+
+      ballInvPos = ballPos;
+      ballInvVel = ballVel * 2.5;
+
+      paddle1HasCollide = true;
+      paddle2HasCollide = false;
     }
     // paddle2 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle2DstRect)) {
       ballVel.x *= -1;
+
+      paddle1HasCollide = false;
+      paddle2HasCollide = true;
     }
     // ball intersects court top
     if (ballPos.y >= SCREEN_HEIGHT - 32) {
@@ -221,6 +240,25 @@ int main( int argc, char* args[] ) {
     if (ballPos.y < 0) {
       ballVel.y *= -1;
     }
+
+    // ball invisible intersects court top
+    if (ballInvPos.y >= SCREEN_HEIGHT - 32) {
+      ballInvVel.y *= -1;
+    }
+    // ball invisible intersects court bottom
+    if (ballInvPos.y < 0) {
+      ballInvVel.y *= -1;
+    }
+
+    // ball invisible intersects paddle2 y
+    if (ballInvPos.x > SCREEN_WIDTH - 20 - 38 - 32) {
+      ballInvPointY = ballInvPos.y;
+      ballInvPos.x = 0.0f;
+      ballInvPos.y = 0.0f;
+      ballInvVel.x = 0.0f;
+      ballInvVel.y = 0.0f;
+    }
+
 
     // ball overpass court right
     if (ballPos.x >= SCREEN_WIDTH) {
@@ -233,6 +271,9 @@ int main( int argc, char* args[] ) {
 
       paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
       paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
+
+      paddle1HasCollide = false;
+      paddle2HasCollide = false;
       SDL_Delay(1000);
     }
 
@@ -249,10 +290,38 @@ int main( int argc, char* args[] ) {
       paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
       paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
 
+      paddle1HasCollide = false;
+      paddle2HasCollide = false;
       SDL_Delay(1000);
     }
 
     ballPos += ballVel;
+    ballInvPos += ballInvVel;
+
+    if (paddle1HasCollide) {
+      // paddle2Pos.y = ballPos.y;
+      if (ballInvPointY > 0.0f) {
+        /*
+         * the paddle should always try to collide with the ball in the middle
+         * of the paddle.
+         *
+         * the ball invisible y determines the point where the invisible
+         * ball pass the x paddle boundary so the paddle should move towards
+         * that point plus half of its height minus half of the height of the
+         * invisible ball, in order to try to collide with the normal ball in
+         * the middle of the paddle.
+         */
+        paddle2Pos.y += ballInvPointY > paddle2Pos.y + 128 / 2 - 32 ? paddle2Vel.y : paddle2Vel.y * -1;
+      }
+      else {
+        paddle2Pos.y += ballInvVel.y > 0 ? paddle2Vel.y : paddle2Vel.y * -1;
+      }
+    }
+
+    if (paddle2HasCollide) {
+      // paddle2Pos.y = ballPos.y;
+      paddle2Pos.y += ballVel.y > 0 ? paddle2Vel.y : paddle2Vel.y * -1;
+    }
 
     // paddle1 intersects court top
     if (paddle1Pos.y < 0) {
@@ -278,6 +347,11 @@ int main( int argc, char* args[] ) {
 	  SDL_SetRenderDrawColor(renderer, 000, 000, 000, 255);
     // Clear screen
 		SDL_RenderClear(renderer);
+
+    // ball invisible
+    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    SDL_Rect ballInvRect = {(int)ballInvPos.x, (int)ballInvPos.y, 32, 32};
+    SDL_RenderFillRect(renderer, &ballInvRect);
 
     // court
     courtSrcRect = { 0, 0, 800, 600 };
