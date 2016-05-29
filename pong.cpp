@@ -217,6 +217,7 @@ int main( int argc, char* args[] ) {
 
     // paddle1 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle1DstRect)) {
+      ballPos.x = paddle1Pos.x + 32;
       ballVel.x *= -1;
 
       ballInvPos = ballPos;
@@ -227,6 +228,7 @@ int main( int argc, char* args[] ) {
     }
     // paddle2 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle2DstRect)) {
+      ballPos.x = paddle2Pos.x - 32;
       ballVel.x *= -1;
 
       paddle1HasCollide = false;
