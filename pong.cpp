@@ -167,7 +167,7 @@ int main( int argc, char* args[] ) {
 
   // paddle 1
   Vector2D paddle1Pos = Vector2D(20, SCREEN_HEIGHT / 2 - 128 / 2);
-  Vector2D paddle1Vel = Vector2D(0, 25);
+  Vector2D paddle1Vel = Vector2D(0, 2);
 
   // paddle 2
   Vector2D paddle2Pos = Vector2D(SCREEN_WIDTH - 20 - 38, SCREEN_HEIGHT / 2 - 128 / 2);
@@ -186,17 +186,19 @@ int main( int argc, char* args[] ) {
   bool paddle1HasCollide = false;
   bool paddle2HasCollide = false;
 
+  const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
+
 	//While application is running
 	while(!quit) {
 
     frameStart = SDL_GetTicks();
 
-		//Handle events on queue
 		while( SDL_PollEvent( &e ) != 0 ) {
 			//User requests quit
 			if( e.type == SDL_QUIT ) {
 				quit = true;
 			}
+      /*
 			else if(e.type == SDL_KEYDOWN) {
 				switch( e.key.keysym.sym ) {
 					case SDLK_w:
@@ -205,15 +207,17 @@ int main( int argc, char* args[] ) {
 					case SDLK_s:
 					paddle1Pos += paddle1Vel;
 					break;
-          case SDLK_UP:
-          // paddle2Pos -= paddle2Vel;
-          break;
-          case SDLK_DOWN:
-          // paddle2Pos += paddle2Vel;
-          break;
 				}
 			}
+      */
 		}
+
+    if (keyboardState[SDL_SCANCODE_UP]) {
+      paddle1Pos -= paddle1Vel;
+    }
+    if (keyboardState[SDL_SCANCODE_DOWN]) {
+      paddle1Pos += paddle1Vel;
+    }
 
     // paddle1 intersects ball
     if (SDL_HasIntersection(&ballDstRect, &paddle1DstRect)) {
