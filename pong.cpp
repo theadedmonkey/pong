@@ -177,6 +177,9 @@ int main( int argc, char* args[] ) {
   Vector2D ballPos = Vector2D(SCREEN_WIDTH / 2 - 32 / 2, 0);
   Vector2D ballVel = Vector2D(2.5, 2.5);
 
+  int ballSpeedLow = 3.0;
+  int ballSpeedHight = 4.5;
+
   // ball invisible
   Vector2D ballInvPos = Vector2D();
   Vector2D ballInvVel = Vector2D();
@@ -198,18 +201,6 @@ int main( int argc, char* args[] ) {
 			if( e.type == SDL_QUIT ) {
 				quit = true;
 			}
-      /*
-			else if(e.type == SDL_KEYDOWN) {
-				switch( e.key.keysym.sym ) {
-					case SDLK_w:
-					paddle1Pos -= paddle1Vel;
-					break;
-					case SDLK_s:
-					paddle1Pos += paddle1Vel;
-					break;
-				}
-			}
-      */
 		}
 
     if (keyboardState[SDL_SCANCODE_UP]) {
@@ -219,10 +210,29 @@ int main( int argc, char* args[] ) {
       paddle1Pos += paddle1Vel;
     }
 
-    // paddle1 intersects ball
-    if (SDL_HasIntersection(&ballDstRect, &paddle1DstRect)) {
+    // ball intersects paddle1
+    if (ballPos.x >= paddle1Pos.x &&
+        ballPos.x <= paddle1Pos.x + 32 &&
+        ballPos.y + 32 >= paddle1Pos.y &&
+        ballPos.y <= paddle1Pos.y + 128) {
+
+      // ball intersects paddle1 in top
+      if (ballPos.y + 32 >= paddle1Pos.y && ballPos.y + 32 <= paddle1Pos.y + 42) {
+        ballVel.x = ballSpeedHight * 1;
+        ballVel.y = ballSpeedHight * -1;
+      }
+      // ball intersects paddle1 in middle
+      else if (ballPos.y >= paddle1Pos.y + 42 && ballPos.y + 32 <= paddle1Pos.y + 42 + 44) {
+        ballVel.x = ballSpeedLow * 1;
+        ballVel.y = 0;
+      }
+      // ball intersects paddle1 in bottom
+      else if (ballPos.y <= paddle1Pos.y + 128 && ballPos.y >= paddle1Pos.y + 128 - 42) {
+        ballVel.x = ballSpeedHight * 1;
+        ballVel.y = ballSpeedHight * 1;
+      }
+
       ballPos.x = paddle1Pos.x + 32;
-      ballVel.x *= -1;
 
       ballInvPos = ballPos;
       ballInvVel = ballVel * 2.5;
@@ -230,14 +240,38 @@ int main( int argc, char* args[] ) {
       paddle1HasCollide = true;
       paddle2HasCollide = false;
     }
-    // paddle2 intersects ball
-    if (SDL_HasIntersection(&ballDstRect, &paddle2DstRect)) {
+
+    // ball intersects paddle2
+    if (ballPos.x + 32 >= paddle2Pos.x &&
+        ballPos.x + 32 <= paddle2Pos.x + 32 &&
+        ballPos.y + 32 >= paddle2Pos.y &&
+        ballPos.y <= paddle2Pos.y + 128) {
+
+      // ball intersects paddle2 in top
+      if (ballPos.y + 32 >= paddle2Pos.y && ballPos.y + 32 <= paddle2Pos.y + 42) {
+        ballVel.x = ballSpeedHight * -1;
+        ballVel.y = ballSpeedHight * -1;
+      }
+      // ball intersects paddle2 in middle
+      else if (ballPos.y >= paddle2Pos.y + 42 && ballPos.y + 32 <= paddle2Pos.y + 42 + 44) {
+        ballVel.x = ballSpeedLow * -1;
+        ballVel.y = 0;
+      }
+      // ball intersects paddle2 in bottom
+      else if (ballPos.y <= paddle2Pos.y + 128 && ballPos.y >= paddle2Pos.y + 128 - 42) {
+        ballVel.x = ballSpeedHight * -1;
+        ballVel.y = ballSpeedHight * 1;
+      }
+
       ballPos.x = paddle2Pos.x - 32;
-      ballVel.x *= -1;
+
+      ballInvPos = ballPos;
+      ballInvVel = ballVel * 2.5;
 
       paddle1HasCollide = false;
       paddle2HasCollide = true;
     }
+
     // ball intersects court top
     if (ballPos.y >= SCREEN_HEIGHT - 32) {
       ballVel.y *= -1;
@@ -269,8 +303,12 @@ int main( int argc, char* args[] ) {
     // ball overpass court right
     if (ballPos.x >= SCREEN_WIDTH) {
       player1Score += 1;
+
       ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
       ballPos.y = 0;
+
+      ballVel.x = 2.5;
+      ballVel.y = 2.5;
 
       paddle1Pos.x = 20;
     	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
@@ -289,6 +327,9 @@ int main( int argc, char* args[] ) {
 
       ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
       ballPos.y = 0;
+
+      ballVel.x = 2.5;
+      ballVel.y = 2.5;
 
       paddle1Pos.x = 20;
     	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
