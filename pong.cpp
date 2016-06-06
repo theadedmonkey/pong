@@ -106,14 +106,18 @@ int main( int argc, char* args[] ) {
     return -1;
   }
 
-  //The window we'll be rendering to
+  // The window we'll be rendering to
 	SDL_Window* window = createWindow();
 
-	//The window renderer
+	// The window renderer
 	SDL_Renderer* renderer = createRenderer(window);
 
-	//Main loop flag
+	// Main loop flag
 	bool quit = false;
+
+  // Scenes
+  bool sceneHall = true;
+  bool scenePlay = false;
 
 	//Event handler
 	SDL_Event e;
@@ -149,10 +153,14 @@ int main( int argc, char* args[] ) {
   /**************************************
    * Game objects
    **************************************/
+  SDL_Texture* hallTexture = loadTexture(renderer, "./assets/hall.jpg");
   SDL_Texture* courtTexture = loadTexture(renderer, "./assets/court.png");
   SDL_Texture* paddle1Texture = loadTexture(renderer, "./assets/paddle-green.png");
   SDL_Texture* paddle2Texture = loadTexture(renderer, "./assets/paddle-blue.png");
   SDL_Texture* ballTexture = loadTexture(renderer, "./assets/ball.png");
+
+  SDL_Rect hallSrcRect;
+  SDL_Rect hallDstRect;
 
   SDL_Rect courtSrcRect;
   SDL_Rect courtDstRect;
@@ -212,11 +220,44 @@ int main( int argc, char* args[] ) {
     frameStart = SDL_GetTicks();
 
 		while( SDL_PollEvent( &e ) != 0 ) {
-			//User requests quit
+			// User requests quit
 			if( e.type == SDL_QUIT ) {
 				quit = true;
 			}
+      // User presses a key
+      else if(e.type == SDL_KEYDOWN) {
+        switch(e.key.keysym.sym) {
+          case SDLK_SPACE:
+          if (sceneHall) {
+            sceneHall = false;
+            scenePlay = true;
+          }
+          break;
+          case SDLK_ESCAPE:
+          if (scenePlay) {
+            sceneHall = true;
+            scenePlay = false;
+          }
+          break;
+        }
+      }
 		}
+
+    if (sceneHall) {
+      // Select the color for drawing. It is set to black here.
+  	  SDL_SetRenderDrawColor(renderer, 000, 000, 000, 255);
+      // Clear screen
+  		SDL_RenderClear(renderer);
+
+      // hall
+      hallSrcRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+      hallDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+      SDL_RenderCopy(renderer, hallTexture, &hallSrcRect, &hallDstRect);
+
+      SDL_RenderPresent(renderer);
+    }
+    // play scene
+    else {
 
     if (keyboardState[SDL_SCANCODE_UP]) {
       paddle1Pos -= paddle1Vel;
@@ -454,8 +495,8 @@ int main( int argc, char* args[] ) {
     if (frameTime < DELAY_TIME) {
       SDL_Delay((int) (DELAY_TIME - frameTime));
     }
+    } // end of play scene
   }
-
   //Free resources and close SDL
   close(window, renderer);
 
