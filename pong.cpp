@@ -8,7 +8,10 @@
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 800;
+const int SCREEN_WIDTH_HALF = SCREEN_WIDTH / 2;
+
 const int SCREEN_HEIGHT = 600;
+const int SCREEN_HEIGHT_HALF = SCREEN_HEIGHT / 2;
 
 const int FPS = 120;
 const int DELAY_TIME = 1000.0f / FPS;
@@ -165,16 +168,28 @@ int main( int argc, char* args[] ) {
 
   SDL_Rect ballInvRect;
 
+  const int PADDLE_WIDTH = 32;
+  const int PADDLE_WIDTH_HALF = PADDLE_WIDTH / 2;
+
+  const int PADDLE_HEIGHT = 128;
+  const int PADDLE_HEIGHT_HALF = PADDLE_HEIGHT / 2;
+
+  const int BALL_WIDTH = 32;
+  const int BALL_WIDTH_HALF = BALL_WIDTH / 2;
+
+  const int BALL_HEIGHT = 32;
+  const int BALL_HEIGHT_HALF = BALL_HEIGHT / 2;
+
   // paddle 1
-  Vector2D paddle1Pos = Vector2D(20, SCREEN_HEIGHT / 2 - 128 / 2);
+  Vector2D paddle1Pos = Vector2D(20, SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF);
   Vector2D paddle1Vel = Vector2D(0, 2);
 
   // paddle 2
-  Vector2D paddle2Pos = Vector2D(SCREEN_WIDTH - 20 - 38, SCREEN_HEIGHT / 2 - 128 / 2);
+  Vector2D paddle2Pos = Vector2D(SCREEN_WIDTH - 20 - PADDLE_WIDTH, SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF);
   Vector2D paddle2Vel = Vector2D(0, 1.5);
 
   // ball
-  Vector2D ballPos = Vector2D(SCREEN_WIDTH / 2 - 32 / 2, 0);
+  Vector2D ballPos = Vector2D(SCREEN_WIDTH_HALF - BALL_WIDTH_HALF, 0);
   Vector2D ballVel = Vector2D(2.5, 2.5);
 
   int ballSpeedLow = 3.0;
@@ -212,27 +227,27 @@ int main( int argc, char* args[] ) {
 
     // ball intersects paddle1
     if (ballPos.x >= paddle1Pos.x &&
-        ballPos.x <= paddle1Pos.x + 32 &&
-        ballPos.y + 32 >= paddle1Pos.y &&
-        ballPos.y <= paddle1Pos.y + 128) {
+        ballPos.x <= paddle1Pos.x + PADDLE_WIDTH &&
+        ballPos.y + BALL_HEIGHT >= paddle1Pos.y &&
+        ballPos.y <= paddle1Pos.y + PADDLE_HEIGHT) {
 
       // ball intersects paddle1 in top
-      if (ballPos.y + 32 >= paddle1Pos.y && ballPos.y + 32 <= paddle1Pos.y + 42) {
+      if (ballPos.y + BALL_HEIGHT >= paddle1Pos.y && ballPos.y + BALL_HEIGHT <= paddle1Pos.y + 42) {
         ballVel.x = ballSpeedHight * 1;
         ballVel.y = ballSpeedHight * -1;
       }
       // ball intersects paddle1 in middle
-      else if (ballPos.y >= paddle1Pos.y + 42 && ballPos.y + 32 <= paddle1Pos.y + 42 + 44) {
+      else if (ballPos.y >= paddle1Pos.y + 42 && ballPos.y + BALL_HEIGHT <= paddle1Pos.y + 42 + 44) {
         ballVel.x = ballSpeedLow * 1;
         ballVel.y = 0;
       }
       // ball intersects paddle1 in bottom
-      else if (ballPos.y <= paddle1Pos.y + 128 && ballPos.y >= paddle1Pos.y + 128 - 42) {
+      else if (ballPos.y <= paddle1Pos.y + PADDLE_HEIGHT && ballPos.y >= paddle1Pos.y + PADDLE_HEIGHT - 42) {
         ballVel.x = ballSpeedHight * 1;
         ballVel.y = ballSpeedHight * 1;
       }
 
-      ballPos.x = paddle1Pos.x + 32;
+      ballPos.x = paddle1Pos.x + PADDLE_WIDTH;
 
       ballInvPos = ballPos;
       ballInvVel = ballVel * 2.5;
@@ -242,28 +257,28 @@ int main( int argc, char* args[] ) {
     }
 
     // ball intersects paddle2
-    if (ballPos.x + 32 >= paddle2Pos.x &&
-        ballPos.x + 32 <= paddle2Pos.x + 32 &&
-        ballPos.y + 32 >= paddle2Pos.y &&
-        ballPos.y <= paddle2Pos.y + 128) {
+    if (ballPos.x + BALL_WIDTH >= paddle2Pos.x &&
+        ballPos.x + BALL_WIDTH <= paddle2Pos.x + PADDLE_WIDTH &&
+        ballPos.y + BALL_HEIGHT >= paddle2Pos.y &&
+        ballPos.y <= paddle2Pos.y + PADDLE_HEIGHT) {
 
       // ball intersects paddle2 in top
-      if (ballPos.y + 32 >= paddle2Pos.y && ballPos.y + 32 <= paddle2Pos.y + 42) {
+      if (ballPos.y + BALL_HEIGHT >= paddle2Pos.y && ballPos.y + BALL_HEIGHT <= paddle2Pos.y + 42) {
         ballVel.x = ballSpeedHight * -1;
         ballVel.y = ballSpeedHight * -1;
       }
       // ball intersects paddle2 in middle
-      else if (ballPos.y >= paddle2Pos.y + 42 && ballPos.y + 32 <= paddle2Pos.y + 42 + 44) {
+      else if (ballPos.y >= paddle2Pos.y + 42 && ballPos.y + BALL_HEIGHT <= paddle2Pos.y + 42 + 44) {
         ballVel.x = ballSpeedLow * -1;
         ballVel.y = 0;
       }
       // ball intersects paddle2 in bottom
-      else if (ballPos.y <= paddle2Pos.y + 128 && ballPos.y >= paddle2Pos.y + 128 - 42) {
+      else if (ballPos.y <= paddle2Pos.y + PADDLE_HEIGHT && ballPos.y >= paddle2Pos.y + PADDLE_HEIGHT - 42) {
         ballVel.x = ballSpeedHight * -1;
         ballVel.y = ballSpeedHight * 1;
       }
 
-      ballPos.x = paddle2Pos.x - 32;
+      ballPos.x = paddle2Pos.x - PADDLE_WIDTH;
 
       ballInvPos = ballPos;
       ballInvVel = ballVel * 2.5;
@@ -273,7 +288,7 @@ int main( int argc, char* args[] ) {
     }
 
     // ball intersects court top
-    if (ballPos.y >= SCREEN_HEIGHT - 32) {
+    if (ballPos.y >= SCREEN_HEIGHT - BALL_HEIGHT) {
       ballVel.y *= -1;
     }
     // ball intersects court bottom
@@ -282,7 +297,7 @@ int main( int argc, char* args[] ) {
     }
 
     // ball invisible intersects court top
-    if (ballInvPos.y >= SCREEN_HEIGHT - 32) {
+    if (ballInvPos.y >= SCREEN_HEIGHT - BALL_HEIGHT) {
       ballInvVel.y *= -1;
     }
     // ball invisible intersects court bottom
@@ -291,7 +306,7 @@ int main( int argc, char* args[] ) {
     }
 
     // ball invisible intersects paddle2 y
-    if (ballInvPos.x > SCREEN_WIDTH - 20 - 38 - 32) {
+    if (ballInvPos.x > SCREEN_WIDTH - 20 - PADDLE_WIDTH - BALL_WIDTH) {
       ballInvPointY = ballInvPos.y;
       ballInvPos.x = 0.0f;
       ballInvPos.y = 0.0f;
@@ -304,17 +319,17 @@ int main( int argc, char* args[] ) {
     if (ballPos.x >= SCREEN_WIDTH) {
       player1Score += 1;
 
-      ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
+      ballPos.x = SCREEN_WIDTH_HALF - BALL_WIDTH_HALF;
       ballPos.y = 0;
 
       ballVel.x = 2.5;
       ballVel.y = 2.5;
 
       paddle1Pos.x = 20;
-    	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
+    	paddle1Pos.y = SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF;
 
-      paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
-      paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle2Pos.x = SCREEN_WIDTH - 20 - PADDLE_WIDTH;
+      paddle2Pos.y = SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF;
 
       paddle1HasCollide = false;
       paddle2HasCollide = false;
@@ -322,20 +337,20 @@ int main( int argc, char* args[] ) {
     }
 
     // ball overpass court left
-    if (ballPos.x <= 0 - 32) {
+    if (ballPos.x <= 0 - BALL_WIDTH) {
       player2Score += 1;
 
-      ballPos.x = SCREEN_WIDTH / 2 - 32 / 2;
+      ballPos.x = SCREEN_WIDTH_HALF - BALL_WIDTH_HALF;
       ballPos.y = 0;
 
       ballVel.x = 2.5;
       ballVel.y = 2.5;
 
       paddle1Pos.x = 20;
-    	paddle1Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
+    	paddle1Pos.y = SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF;
 
-      paddle2Pos.x = SCREEN_WIDTH - 20 - 38;
-      paddle2Pos.y = SCREEN_HEIGHT / 2 - 128 / 2;
+      paddle2Pos.x = SCREEN_WIDTH - 20 - PADDLE_WIDTH;
+      paddle2Pos.y = SCREEN_HEIGHT_HALF - PADDLE_HEIGHT_HALF;
 
       paddle1HasCollide = false;
       paddle2HasCollide = false;
@@ -358,7 +373,7 @@ int main( int argc, char* args[] ) {
          * invisible ball, in order to try to collide with the normal ball in
          * the middle of the paddle.
          */
-        paddle2Pos.y += ballInvPointY > paddle2Pos.y + 128 / 2 - 32 ? paddle2Vel.y : paddle2Vel.y * -1;
+        paddle2Pos.y += ballInvPointY > paddle2Pos.y + PADDLE_HEIGHT_HALF - BALL_HEIGHT ? paddle2Vel.y : paddle2Vel.y * -1;
       }
       else {
         paddle2Pos.y += ballInvVel.y > 0 ? paddle2Vel.y : paddle2Vel.y * -1;
@@ -366,7 +381,6 @@ int main( int argc, char* args[] ) {
     }
 
     if (paddle2HasCollide) {
-      // paddle2Pos.y = ballPos.y;
       paddle2Pos.y += ballVel.y > 0 ? paddle2Vel.y : paddle2Vel.y * -1;
     }
 
@@ -375,16 +389,16 @@ int main( int argc, char* args[] ) {
       paddle1Pos.y = 0;
     }
     // paddle1 intersects court bottom
-    if (paddle1Pos.y >= SCREEN_HEIGHT - 128) {
-      paddle1Pos.y = SCREEN_HEIGHT - 128;
+    if (paddle1Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT) {
+      paddle1Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
     }
     // paddle2 intersects court top
     if (paddle2Pos.y < 0) {
       paddle2Pos.y = 0;
     }
     // paddle2 intersects court bottom
-    if (paddle2Pos.y >= SCREEN_HEIGHT - 128) {
-      paddle2Pos.y = SCREEN_HEIGHT - 128;
+    if (paddle2Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT) {
+      paddle2Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
     }
 
     /**************************************
@@ -401,17 +415,17 @@ int main( int argc, char* args[] ) {
     SDL_RenderFillRect(renderer, &ballInvRect);
 
     // court
-    courtSrcRect = { 0, 0, 800, 600 };
-    courtDstRect = { 0, 0, 800, 600 };
+    courtSrcRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    courtDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
     SDL_RenderCopy(renderer, courtTexture, &courtSrcRect, &courtDstRect);
 
     // paddle 1
-		paddle1SrcRect = { 0, 0, 32, 128 };
+		paddle1SrcRect = { 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT };
 		paddle1DstRect = { (int)paddle1Pos.x, (int)paddle1Pos.y, 32, 128 };
 		SDL_RenderCopy(renderer, paddle1Texture, &paddle1SrcRect, &paddle1DstRect);
 
     // paddle 2
-    paddle2SrcRect = { 0, 0, 32, 128 };
+    paddle2SrcRect = { 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT };
     paddle2DstRect = { (int)paddle2Pos.x, (int)paddle2Pos.y, 32, 128 };
     SDL_RenderCopy(renderer, paddle2Texture, &paddle2SrcRect, &paddle2DstRect);
 
@@ -419,18 +433,18 @@ int main( int argc, char* args[] ) {
     player1ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player1Score).c_str(), textColor);
     player1ScoreTexture = SDL_CreateTextureFromSurface(renderer, player1ScoreSurface);
     SDL_FreeSurface(player1ScoreSurface);
-    player1ScoreDstRect = { SCREEN_WIDTH / 2 - 30 - 20, 20 , 30, 60 };
+    player1ScoreDstRect = { SCREEN_WIDTH_HALF - 30 - 20, 20 , 30, 60 };
     SDL_RenderCopy(renderer, player1ScoreTexture, nullptr, &player1ScoreDstRect);
 
     // player 2 score
     player2ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player2Score).c_str(), textColor);
     player2ScoreTexture = SDL_CreateTextureFromSurface(renderer, player2ScoreSurface);
     SDL_FreeSurface(player2ScoreSurface);
-    player2ScoreDstRect = { SCREEN_WIDTH / 2 + 20, 20 , 30, 60 };
+    player2ScoreDstRect = { SCREEN_WIDTH_HALF + 20, 20 , 30, 60 };
     SDL_RenderCopy(renderer, player2ScoreTexture, nullptr, &player2ScoreDstRect);
 
     // ball
-    ballSrcRect = { 0, 0, 32, 32 };
+    ballSrcRect = { 0, 0, BALL_WIDTH, BALL_HEIGHT };
     ballDstRect = { (int)ballPos.x, (int)ballPos.y, 32, 32 };
     SDL_RenderCopy(renderer, ballTexture, &ballSrcRect, &ballDstRect);
 
