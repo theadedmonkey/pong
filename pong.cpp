@@ -426,20 +426,20 @@ int main( int argc, char* args[] ) {
     }
 
     // paddle1 intersects court top
-    if (paddle1Pos.y < 0) {
-      paddle1Pos.y = 0;
+    if (paddle1Pos.y < -PADDLE_HEIGHT_HALF) {
+      paddle1Pos.y = -PADDLE_HEIGHT_HALF;
     }
     // paddle1 intersects court bottom
-    if (paddle1Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT) {
-      paddle1Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
+    if (paddle1Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT_HALF) {
+      paddle1Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT_HALF;
     }
     // paddle2 intersects court top
-    if (paddle2Pos.y < 0) {
-      paddle2Pos.y = 0;
+    if (paddle2Pos.y < 0 -PADDLE_HEIGHT_HALF) {
+      paddle2Pos.y = -PADDLE_HEIGHT_HALF;
     }
     // paddle2 intersects court bottom
-    if (paddle2Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT) {
-      paddle2Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
+    if (paddle2Pos.y >= SCREEN_HEIGHT - PADDLE_HEIGHT_HALF) {
+      paddle2Pos.y = SCREEN_HEIGHT - PADDLE_HEIGHT_HALF;
     }
 
     /**************************************
