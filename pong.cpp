@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include "lib/Vector2D.h"
+
+std::vector<std::string> menu = {"play", "options"};
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 800;
@@ -94,6 +97,22 @@ void close(SDL_Window* &window, SDL_Renderer* &renderer) {
 	SDL_Quit();
 }
 
+SDL_Texture* getTextTexture(std::string text, TTF_Font* font, SDL_Color color, SDL_Renderer* renderer) {
+  int textLength = text.length();
+   SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+   if (textSurface == NULL) {
+     printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+   }
+   else {
+     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+     if (textTexture == NULL) {
+       printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+     }
+     SDL_FreeSurface(textSurface);
+     return textTexture;
+   }
+}
+
 int main( int argc, char* args[] ) {
 
   //Start up SDL and create window
@@ -129,26 +148,59 @@ int main( int argc, char* args[] ) {
   int player2Score = 0;
 
   /**************************************
-   * Text font setup
+   * Score font setup
    **************************************/
-  TTF_Font* textFont;
-  SDL_Color textColor = { 255, 255, 255, 255 };
+  TTF_Font* scoreTextFont;
+  SDL_Color scoreTextColor = { 255, 255, 255, 255 };
 
+  SDL_Surface* player1ScoreTextSurface;
+  SDL_Texture* player1ScoreTextTexture;
+  SDL_Rect player1ScoreTextDstRect;
 
-  SDL_Surface* player1ScoreSurface;
-  SDL_Texture* player1ScoreTexture;
-  SDL_Rect player1ScoreDstRect;
-
-  SDL_Surface* player2ScoreSurface;
-  SDL_Texture* player2ScoreTexture;
-  SDL_Rect player2ScoreDstRect;
+  SDL_Surface* player2ScoreTextSurface;
+  SDL_Texture* player2ScoreTextTexture;
+  SDL_Rect player2ScoreTextDstRect;
 
   // Load our fonts, with a huge size
-  textFont = TTF_OpenFont("./assets/Roboto-Black.ttf", 90);
-  if (textFont == nullptr) {
-    std::cout << "Failed to load text font: " << SDL_GetError() << std::endl;
+  scoreTextFont = TTF_OpenFont("./assets/Roboto-Black.ttf", 90);
+  if (scoreTextFont == nullptr) {
+    std::cout << "Failed to load score text font: " << SDL_GetError() << std::endl;
     return -1;
   }
+
+  /**************************************
+   * Menu font setup
+   **************************************/
+   TTF_Font* menuTextFont;
+   SDL_Color menuTextColor = { 255, 255, 255, 255 };
+   int menuTextSize = 24;
+
+   // Load our fonts, with a huge size
+   menuTextFont = TTF_OpenFont("./assets/Roboto-Black.ttf", menuTextSize);
+   if (menuTextFont == nullptr) {
+     std::cout << "Failed to load menu text font: " << SDL_GetError() << std::endl;
+     return -1;
+   }
+
+   std::string menuOption1 = "play";
+   int menuOption1RectW = menuOption1.length() * menuTextSize;
+   SDL_Rect menuOption1Rect = {
+     SCREEN_WIDTH_HALF - menuOption1RectW / 2,
+     20,
+     menuOption1RectW,
+     100
+   };
+   SDL_Texture* menuOption1Texture = getTextTexture(menuOption1, menuTextFont, menuTextColor, renderer);
+
+   std::string menuOption2 = "options";
+   int menuOption2RectW = menuOption2.length() * menuTextSize;
+   SDL_Rect menuOption2Rect = {
+     SCREEN_WIDTH_HALF - menuOption2RectW / 2,
+     120,
+     menuOption2RectW,
+     100
+   };
+   SDL_Texture* menuOption2Texture = getTextTexture(menuOption2, menuTextFont, menuTextColor, renderer);
 
   /**************************************
    * Game objects
@@ -254,6 +306,10 @@ int main( int argc, char* args[] ) {
       hallDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
       SDL_RenderCopy(renderer, hallTexture, &hallSrcRect, &hallDstRect);
 
+      // menu
+      SDL_RenderCopy(renderer, menuOption1Texture, nullptr, &menuOption1Rect);
+      SDL_RenderCopy(renderer, menuOption2Texture, nullptr, &menuOption2Rect);
+
       SDL_RenderPresent(renderer);
     }
     // play scene
@@ -267,28 +323,29 @@ int main( int argc, char* args[] ) {
     }
 
     // ball intersects paddle1
+
     if (ballPos.x >= paddle1Pos.x &&
         ballPos.x <= paddle1Pos.x + PADDLE_WIDTH &&
         ballPos.y + BALL_HEIGHT >= paddle1Pos.y &&
         ballPos.y <= paddle1Pos.y + PADDLE_HEIGHT) {
 
+      ballPos.x = paddle1Pos.x + PADDLE_WIDTH;
+
       // ball intersects paddle1 in top
-      if (ballPos.y + BALL_HEIGHT >= paddle1Pos.y && ballPos.y + BALL_HEIGHT <= paddle1Pos.y + 42) {
+      if (ballPos.y >= paddle1Pos.y && ballPos.y <= paddle1Pos.y + 42) {
         ballVel.x = ballSpeedHight * 1;
         ballVel.y = ballSpeedHight * -1;
       }
       // ball intersects paddle1 in middle
-      else if (ballPos.y >= paddle1Pos.y + 42 && ballPos.y + BALL_HEIGHT <= paddle1Pos.y + 42 + 44) {
+      else if (ballPos.y  > paddle1Pos.y + 42 && ballPos.y < paddle1Pos.y + 42 + 44) {
         ballVel.x = ballSpeedLow * 1;
         ballVel.y = 0;
       }
       // ball intersects paddle1 in bottom
-      else if (ballPos.y <= paddle1Pos.y + PADDLE_HEIGHT && ballPos.y >= paddle1Pos.y + PADDLE_HEIGHT - 42) {
+      else if (ballPos.y >= paddle1Pos.y + 42 + 44 && ballPos.y <= paddle1Pos.y + PADDLE_HEIGHT) {
         ballVel.x = ballSpeedHight * 1;
         ballVel.y = ballSpeedHight * 1;
       }
-
-      ballPos.x = paddle1Pos.x + PADDLE_WIDTH;
 
       ballInvPos = ballPos;
       ballInvVel = ballVel * 2.5;
@@ -309,7 +366,7 @@ int main( int argc, char* args[] ) {
         ballVel.y = ballSpeedHight * -1;
       }
       // ball intersects paddle2 in middle
-      else if (ballPos.y >= paddle2Pos.y + 42 && ballPos.y + BALL_HEIGHT <= paddle2Pos.y + 42 + 44) {
+      else if (ballPos.y + BALL_HEIGHT >= paddle2Pos.y + 42 && ballPos.y + BALL_HEIGHT <= paddle2Pos.y + 42 + 44) {
         ballVel.x = ballSpeedLow * -1;
         ballVel.y = 0;
       }
@@ -470,19 +527,19 @@ int main( int argc, char* args[] ) {
     paddle2DstRect = { (int)paddle2Pos.x, (int)paddle2Pos.y, 32, 128 };
     SDL_RenderCopy(renderer, paddle2Texture, &paddle2SrcRect, &paddle2DstRect);
 
-    // player 1 score
-    player1ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player1Score).c_str(), textColor);
-    player1ScoreTexture = SDL_CreateTextureFromSurface(renderer, player1ScoreSurface);
-    SDL_FreeSurface(player1ScoreSurface);
-    player1ScoreDstRect = { SCREEN_WIDTH_HALF - 30 - 20, 20 , 30, 60 };
-    SDL_RenderCopy(renderer, player1ScoreTexture, nullptr, &player1ScoreDstRect);
+    // player 1 score text
+    player1ScoreTextSurface = TTF_RenderText_Solid(scoreTextFont, std::to_string(player1Score).c_str(), scoreTextColor);
+    player1ScoreTextTexture = SDL_CreateTextureFromSurface(renderer, player1ScoreTextSurface);
+    SDL_FreeSurface(player1ScoreTextSurface);
+    player1ScoreTextDstRect = { SCREEN_WIDTH_HALF - 30 - 20, 20 , 30, 60 };
+    SDL_RenderCopy(renderer, player1ScoreTextTexture, nullptr, &player1ScoreTextDstRect);
 
-    // player 2 score
-    player2ScoreSurface = TTF_RenderText_Solid(textFont, std::to_string(player2Score).c_str(), textColor);
-    player2ScoreTexture = SDL_CreateTextureFromSurface(renderer, player2ScoreSurface);
-    SDL_FreeSurface(player2ScoreSurface);
-    player2ScoreDstRect = { SCREEN_WIDTH_HALF + 20, 20 , 30, 60 };
-    SDL_RenderCopy(renderer, player2ScoreTexture, nullptr, &player2ScoreDstRect);
+    // player 2 score text
+    player2ScoreTextSurface = TTF_RenderText_Solid(scoreTextFont, std::to_string(player2Score).c_str(), scoreTextColor);
+    player2ScoreTextTexture = SDL_CreateTextureFromSurface(renderer, player2ScoreTextSurface);
+    SDL_FreeSurface(player2ScoreTextSurface);
+    player2ScoreTextDstRect = { SCREEN_WIDTH_HALF + 20, 20 , 30, 60 };
+    SDL_RenderCopy(renderer, player2ScoreTextTexture, nullptr, &player2ScoreTextDstRect);
 
     // ball
     ballSrcRect = { 0, 0, BALL_WIDTH, BALL_HEIGHT };
