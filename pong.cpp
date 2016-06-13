@@ -98,7 +98,7 @@ void close(SDL_Window* &window, SDL_Renderer* &renderer) {
 }
 
 SDL_Texture* getTextTexture(std::string text, TTF_Font* font, SDL_Color color, SDL_Renderer* renderer) {
-  int textLength = text.length();
+   // int textLength = text.length();
    SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
    if (textSurface == NULL) {
      printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
@@ -168,39 +168,120 @@ int main( int argc, char* args[] ) {
     return -1;
   }
 
-  /**************************************
-   * Menu font setup
-   **************************************/
-   TTF_Font* menuTextFont;
-   SDL_Color menuTextColor = { 255, 255, 255, 255 };
-   int menuTextSize = 24;
+   class Menu {
+     private:
+       SDL_Renderer* m_renderer;
 
-   // Load our fonts, with a huge size
-   menuTextFont = TTF_OpenFont("./assets/Roboto-Black.ttf", menuTextSize);
-   if (menuTextFont == nullptr) {
-     std::cout << "Failed to load menu text font: " << SDL_GetError() << std::endl;
-     return -1;
-   }
+       std::vector<std::string> m_options;
 
-   std::string menuOption1 = "play";
-   int menuOption1RectW = menuOption1.length() * menuTextSize;
-   SDL_Rect menuOption1Rect = {
-     SCREEN_WIDTH_HALF - menuOption1RectW / 2,
-     20,
-     menuOption1RectW,
-     100
+       TTF_Font* textFont;
+       SDL_Color textColor = { 255, 255, 255, 255 };
+       int fontSize = 56;
+
+       std::vector<SDL_Texture*> textTextures;
+       std::vector<SDL_Rect> textRects;
+
+       struct textSize {
+         int w;
+         int h;
+       };
+
+       std::vector<textSize> textSizes;
+
+       int optionActiveIndex = 0;
+
+       SDL_Texture* arrowTexture;
+       SDL_Rect arrowSrcRect;
+       SDL_Rect arrowDstRect;
+
+       void loadTextFont() {
+         // Load our fonts, with a huge size
+         textFont = TTF_OpenFont("./assets/Roboto-Black.ttf", fontSize);
+         if (textFont == nullptr) {
+           std::cout << "Failed to load menu text font: " << SDL_GetError() << std::endl;
+         }
+       };
+
+       void createTextTextures() {
+         for (int i = 0; i < m_options.size(); i++) {
+           std::string optionText = m_options[i];
+           textTextures.push_back(getTextTexture(optionText, textFont, textColor, m_renderer));
+         }
+       };
+
+       void createTextRects() {
+         for (int i = 0; i < textSizes.size(); i++) {
+           textRects.push_back({ 100, textSizes[i].h * i + 100, textSizes[i].w, textSizes[i].h });
+         }
+       };
+
+       void loadArrow() {
+         arrowTexture = loadTexture(m_renderer, "./assets/arrow-right.png");
+       }
+
+       void createArrowRects() {
+         arrowSrcRect = { 0, 0, 64, 64 };
+         arrowDstRect = { 0, 0, 64, 64 };
+       }
+
+     public:
+       Menu(SDL_Renderer* renderer, std::vector<std::string> options) {
+         m_renderer = renderer;
+         m_options = options;
+
+         loadArrow();
+         createArrowRects();
+
+         loadTextFont();
+         createTextTextures();
+
+         // work out the size of the text surface
+         for (int i = 0; i < m_options.size(); i++) {
+           const char *optionText = m_options[i].c_str();
+           int w, h;
+           TTF_SizeText(textFont, optionText, &w, &h);
+
+           textSizes.push_back({ w, h });
+         }
+
+          createTextRects();
+       };
+
+       void render() {
+         for (int i = 0; i < m_options.size(); i++) {
+           // render text
+           SDL_Texture* textTexture = textTextures[i];
+           SDL_Rect textRect = textRects[i];
+           SDL_RenderCopy(m_renderer, textTexture, nullptr, &textRect);
+           // render arrow
+           if (optionActiveIndex == i) {
+             arrowDstRect.x = textRect.x + textRect.w;
+             arrowDstRect.y = textRect.y + textRect.h / 2 - arrowDstRect.h / 2;
+             SDL_RenderCopy(m_renderer, arrowTexture, nullptr, &arrowDstRect);
+           }
+         }
+       };
+
+       void nextOption() {
+         if (optionActiveIndex + 1 >= m_options.size()) {
+           optionActiveIndex = 0;
+         }
+         else {
+           optionActiveIndex += 1;
+         }
+       }
+
+       void prevOption() {
+         if (optionActiveIndex - 1 < 0) {
+           optionActiveIndex = m_options.size() - 1;
+         }
+         else {
+           optionActiveIndex -= 1;
+         }
+       }
+
+
    };
-   SDL_Texture* menuOption1Texture = getTextTexture(menuOption1, menuTextFont, menuTextColor, renderer);
-
-   std::string menuOption2 = "options";
-   int menuOption2RectW = menuOption2.length() * menuTextSize;
-   SDL_Rect menuOption2Rect = {
-     SCREEN_WIDTH_HALF - menuOption2RectW / 2,
-     120,
-     menuOption2RectW,
-     100
-   };
-   SDL_Texture* menuOption2Texture = getTextTexture(menuOption2, menuTextFont, menuTextColor, renderer);
 
   /**************************************
    * Game objects
@@ -266,6 +347,9 @@ int main( int argc, char* args[] ) {
 
   const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
 
+  std::vector<std::string> options = { "play", "options", "credits" };
+  Menu menu = Menu(renderer, options);
+
 	//While application is running
 	while(!quit) {
 
@@ -291,6 +375,17 @@ int main( int argc, char* args[] ) {
             scenePlay = false;
           }
           break;
+          // menu controls
+          case SDLK_DOWN:
+          if (sceneHall) {
+            menu.nextOption();
+          }
+          break;
+          case SDLK_UP:
+          if (sceneHall) {
+            menu.prevOption();
+          }
+          break;
         }
       }
 		}
@@ -307,8 +402,7 @@ int main( int argc, char* args[] ) {
       SDL_RenderCopy(renderer, hallTexture, &hallSrcRect, &hallDstRect);
 
       // menu
-      SDL_RenderCopy(renderer, menuOption1Texture, nullptr, &menuOption1Rect);
-      SDL_RenderCopy(renderer, menuOption2Texture, nullptr, &menuOption2Rect);
+      menu.render();
 
       SDL_RenderPresent(renderer);
     }
