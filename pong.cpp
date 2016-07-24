@@ -4,7 +4,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-// Screen dimension constants
+// screen dimension constants
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_WIDTH_HALF = SCREEN_WIDTH / 2;
 
@@ -18,7 +18,10 @@ const int DELAY_TIME = 1000.0f / FPS;
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
-// game object constants
+// game data
+enum class GAME_SCENES { SPLASH, PLAY };
+GAME_SCENES gameScene;
+
 const int PADDLE_WIDTH = 32;
 const int PADDLE_WIDTH_HALF = PADDLE_WIDTH / 2;
 const int PADDLE_HEIGHT = 128;
@@ -34,12 +37,14 @@ int ballSpeedX;
 int ballSpeedY;
 
 // game textures
+SDL_Texture* splashTexture = nullptr;
 SDL_Texture* courtTexture = nullptr;
 SDL_Texture* playerPaddleTexture = nullptr;
 SDL_Texture* enemyPaddleTexture = nullptr;
 SDL_Texture* ballTexture = nullptr;
 
 // game rects
+SDL_Rect splashRect;
 SDL_Rect courtRect;
 SDL_Rect playerPaddleRect;
 SDL_Rect enemyPaddleRect;
@@ -50,14 +55,18 @@ SDL_Texture* loadTexture(const std::string& path);
 bool loadMedia();
 bool rectsIntersects(const SDL_Rect &a, const SDL_Rect &b);
 bool initGame();
-void drawGame();
-void updateGame();
+void drawScene();
+void drawSplash();
+void drawPlay();
+void updateScene();
+void updateSplash();
+void updatePlay();
 void handlePaddleCollisionWithScreen(SDL_Rect &paddleRect);
 void updatePlayerPaddle();
 void updateEnemyPaddle();
 void bounceBall(int paddleY);
 void updateBall();
-void resetGame();
+void resetPlay();
 
 bool initSDL() {
 	if (SDL_Init( SDL_INIT_EVERYTHING ) == -1 ) {
@@ -96,6 +105,11 @@ SDL_Texture* loadTexture(const std::string &path) {
 }
 
 bool loadMedia() {
+  splashTexture = loadTexture("assets/splash.png");
+	if (!splashTexture) {
+		return false;
+	}
+
   courtTexture = loadTexture("assets/court.png");
   if (!courtTexture) {
     return false;
@@ -148,21 +162,59 @@ bool initGame() {
     return false;
   }
 
-  resetGame();
+  splashRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+  gameScene = GAME_SCENES::SPLASH;
+
+  resetPlay();
 
   return true;
 }
 
-void drawGame() {
-  SDL_RenderClear(renderer);
+void drawScene() {
+	SDL_RenderClear(renderer);
+
+  if(gameScene == GAME_SCENES::SPLASH) {
+		drawSplash();
+	}
+
+	if(gameScene == GAME_SCENES::PLAY) {
+		drawPlay();
+	}
+
+	SDL_RenderPresent(renderer);
+}
+
+void drawSplash() {
+	SDL_RenderCopy(renderer, splashTexture, nullptr, &splashRect);
+}
+
+void drawPlay() {
   SDL_RenderCopy(renderer, courtTexture, nullptr, &courtRect);
   SDL_RenderCopy(renderer, playerPaddleTexture, nullptr, &playerPaddleRect);
   SDL_RenderCopy(renderer, enemyPaddleTexture, nullptr, &enemyPaddleRect);
   SDL_RenderCopy(renderer, ballTexture, nullptr, &ballRect);
-  SDL_RenderPresent(renderer);
 }
 
-void updateGame() {
+void updateScene() {
+	if(gameScene == GAME_SCENES::SPLASH) {
+		updateSplash();
+	}
+
+	if(gameScene == GAME_SCENES::PLAY) {
+		updatePlay();
+	}
+}
+
+void updateSplash() {
+	Uint8 *keys = (Uint8*)SDL_GetKeyboardState(NULL);
+	if(keys[SDL_SCANCODE_RETURN]) {
+	  resetPlay();
+		gameScene = GAME_SCENES::PLAY;
+	}
+}
+
+void updatePlay() {
   updatePlayerPaddle();
   updateEnemyPaddle();
   updateBall();
@@ -253,16 +305,16 @@ void updateBall() {
   // check left and right court collisions
   if (ballRect.x < 0 - BALL_WIDTH) {
     SDL_Delay(500);
-    resetGame();
+    resetPlay();
   }
 
   if(ballRect.x > SCREEN_WIDTH) {
     SDL_Delay(500);
-    resetGame();
+    resetPlay();
   }
 }
 
-void resetGame() {
+void resetPlay() {
   courtRect = {
     0, 0, SCREEN_WIDTH, SCREEN_HEIGHT
   };
@@ -299,8 +351,8 @@ int main( int argc, char* args[] ) {
 				isRunning = false;
 			}
     }
-    updateGame();
-    drawGame();
+    updateScene();
+    drawScene();
 
     int frameTime = SDL_GetTicks() - oldTime;
     if(frameTime < DELAY_TIME) {
