@@ -24,14 +24,14 @@ const int PADDLE_WIDTH_HALF = PADDLE_WIDTH / 2;
 const int PADDLE_HEIGHT = 128;
 const int PADDLE_HEIGHT_HALF = PADDLE_HEIGHT / 2;
 const int PLAYER_PADDLE_SPEED = 5;
-const int ENEMY_PADDLE_SPEED = 8;
+const int ENEMY_PADDLE_SPEED = 5;
 
 const int BALL_WIDTH = 32;
 const int BALL_WIDTH_HALF = BALL_WIDTH / 2;
 const int BALL_HEIGHT = 32;
 const int BALL_HEIGHT_HALF = BALL_HEIGHT / 2;
-int ballSpeedX = 3;
-int ballSpeedY = 3;
+int ballSpeedX;
+int ballSpeedY;
 
 // game textures
 SDL_Texture* courtTexture = nullptr;
@@ -52,8 +52,10 @@ bool rectsIntersects(const SDL_Rect &a, const SDL_Rect &b);
 bool initGame();
 void drawGame();
 void updateGame();
+void handlePaddleCollisionWithScreen(SDL_Rect &paddleRect);
 void updatePlayerPaddle();
 void updateEnemyPaddle();
+void bounceBall(int paddleY);
 void updateBall();
 void resetGame();
 
@@ -166,6 +168,16 @@ void updateGame() {
   updateBall();
 }
 
+void handlePaddleCollisionWithScreen(SDL_Rect &paddleRect) {
+  if(paddleRect.y < 0 - PADDLE_HEIGHT_HALF) {
+    paddleRect.y = 0 - PADDLE_HEIGHT_HALF;
+  }
+
+  if(paddleRect.y > SCREEN_HEIGHT - PADDLE_HEIGHT_HALF) {
+    paddleRect.y = SCREEN_HEIGHT - PADDLE_HEIGHT_HALF;
+  }
+}
+
 void updatePlayerPaddle() {
   Uint8 *keys = (Uint8*)SDL_GetKeyboardState(NULL);
 
@@ -177,18 +189,11 @@ void updatePlayerPaddle() {
     playerPaddleRect.y += PLAYER_PADDLE_SPEED;
   }
 
-  // check paddle collision with screen
-  if(playerPaddleRect.y < 0) {
-    playerPaddleRect.y = 0;
-  }
-
-  if(playerPaddleRect.y > SCREEN_HEIGHT - PADDLE_HEIGHT) {
-    playerPaddleRect.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
-  }
+  handlePaddleCollisionWithScreen(playerPaddleRect);
 }
 
 void updateEnemyPaddle() {
-
+  // enemy paddle ai
   if(enemyPaddleRect.y + PADDLE_HEIGHT_HALF > ballRect.y + BALL_HEIGHT_HALF) {
     enemyPaddleRect.y -= ENEMY_PADDLE_SPEED;
   }
@@ -197,14 +202,27 @@ void updateEnemyPaddle() {
     enemyPaddleRect.y += ENEMY_PADDLE_SPEED;
   }
 
-  // check paddle collision with screen
-  if(enemyPaddleRect.y < 0) {
-    enemyPaddleRect.y = 0;
-  }
+  handlePaddleCollisionWithScreen(enemyPaddleRect);
+}
 
-  if(enemyPaddleRect.y > SCREEN_HEIGHT - PADDLE_HEIGHT) {
-    enemyPaddleRect.y = SCREEN_HEIGHT - PADDLE_HEIGHT;
-  }
+void bounceBall(int paddleY) {
+	ballSpeedX *= -1;
+
+	const int ballYRelativeToPaddle = ballRect.y - paddleY;
+	if(
+	  ballYRelativeToPaddle >= -32 &&
+		ballYRelativeToPaddle < 28
+	) { ballSpeedY = -4; }
+
+	if(
+		ballYRelativeToPaddle >= 28 &&
+		ballYRelativeToPaddle <= 68
+	) { ballSpeedY = 0; }
+
+	if(
+		ballYRelativeToPaddle > 68 &&
+		ballYRelativeToPaddle <= 128
+	) { ballSpeedY = 4; }
 }
 
 void updateBall() {
@@ -212,14 +230,16 @@ void updateBall() {
   ballRect.y += ballSpeedY;
 
   if(rectsIntersects(playerPaddleRect, ballRect)) {
-    ballSpeedX *= -1;
+    ballRect.x = playerPaddleRect.x + PADDLE_WIDTH;
+		bounceBall(playerPaddleRect.y);
   }
 
   if(rectsIntersects(enemyPaddleRect, ballRect)) {
-    ballSpeedX *= -1;
+    ballRect.x = enemyPaddleRect.x - BALL_WIDTH;
+		bounceBall(enemyPaddleRect.y);
   }
 
-  // check collisions with the court
+  // check top and bottom court collisions
   if (ballRect.y < 0) {
     ballRect.y = 0;
     ballSpeedY *= -1;
@@ -228,6 +248,17 @@ void updateBall() {
   if (ballRect.y > SCREEN_HEIGHT - BALL_HEIGHT) {
     ballRect.y = SCREEN_HEIGHT - BALL_HEIGHT;
     ballSpeedY *= -1;
+  }
+
+  // check left and right court collisions
+  if (ballRect.x < 0 - BALL_WIDTH) {
+    SDL_Delay(500);
+    resetGame();
+  }
+
+  if(ballRect.x > SCREEN_WIDTH) {
+    SDL_Delay(500);
+    resetGame();
   }
 }
 
@@ -247,6 +278,9 @@ void resetGame() {
   ballRect = {
     SCREEN_WIDTH_HALF - BALL_WIDTH_HALF, 0, BALL_WIDTH, BALL_HEIGHT
   };
+
+	ballSpeedX = 4;
+	ballSpeedY = 4;
 }
 
 int main( int argc, char* args[] ) {
